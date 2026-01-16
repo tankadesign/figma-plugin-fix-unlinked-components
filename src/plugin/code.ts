@@ -187,6 +187,9 @@ figma.ui.onmessage = async (msg: PluginMessage) => {
       }
     } else if (msg.type === 'cancel') {
       figma.closePlugin()
+    } else if (msg.type === 'resize') {
+      const resizeMsg = msg as { type: 'resize'; width: number; height: number }
+      figma.ui.resize(resizeMsg.width, resizeMsg.height)
     }
   } catch (error) {
     figma.ui.postMessage({

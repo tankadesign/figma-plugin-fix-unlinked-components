@@ -33,6 +33,12 @@ export interface CancelMessage {
   type: 'cancel'
 }
 
+export interface ResizeMessage {
+  type: 'resize'
+  width: number
+  height: number
+}
+
 export interface ReplaceCompleteMessage {
   type: 'replace-complete'
   successCount: number
@@ -44,6 +50,6 @@ export interface ErrorMessage {
   message: string
 }
 
-export type PluginMessage = ScanMessage | ReplaceMessage | SelectMessage | CancelMessage
+export type PluginMessage = ScanMessage | ReplaceMessage | SelectMessage | CancelMessage | ResizeMessage
 
 export type UIMessage = ScanResultMessage | ReplaceCompleteMessage | ErrorMessage

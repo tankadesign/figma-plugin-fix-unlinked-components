@@ -99,6 +99,32 @@ function App() {
     parent.postMessage({ pluginMessage: { type: 'scan', scope } }, '*')
   }, [scope])
 
+  // Handle resize dragging
+  const handleResizeMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    const startX = e.clientX
+    const startY = e.clientY
+    const startWidth = window.innerWidth
+    const startHeight = window.innerHeight
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const deltaX = moveEvent.clientX - startX
+      const deltaY = moveEvent.clientY - startY
+      const newWidth = Math.max(360, startWidth + deltaX)
+      const newHeight = Math.max(240, startHeight + deltaY)
+
+      parent.postMessage({ pluginMessage: { type: 'resize', width: newWidth, height: newHeight } }, '*')
+    }
+
+    const handleMouseUp = () => {
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+    }
+
+    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('mouseup', handleMouseUp)
+  }, [])
+
   return (
     <div className="flex flex-col h-full bg-white">
       <div className="p-3 border-b border-gray-200">
@@ -248,7 +274,7 @@ function App() {
       </div>
 
       {/* Fixed bottom buttons */}
-      <div className="border-t border-gray-200 p-3">
+      <div className="border-t border-gray-200 p-3 relative">
         <div className="flex gap-2">
           <button
             type="button"
@@ -273,6 +299,21 @@ function App() {
             Replace ({selectedIds.size})
           </button>
         </div>
+
+        {/* Resize handle */}
+        <div
+          onMouseDown={handleResizeMouseDown}
+          style={{
+            position: 'absolute',
+            right: 0,
+            bottom: 0,
+            width: '12px',
+            height: '12px',
+            cursor: 'nwse-resize',
+            background: 'transparent',
+          }}
+          aria-label="Resize window"
+        />
       </div>
     </div>
   )
