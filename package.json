@@ -1,0 +1,41 @@
+{
+  "name": "figma-plugin-fix-unlinked-components",
+  "version": "1.0.0",
+  "description": "Figma plugin to fix unlinked component instances",
+  "type": "module",
+  "scripts": {
+    "build:plugin": "esbuild src/plugin/code.ts --bundle --outfile=dist/code.js --target=es2017",
+    "build:ui": "vite build && mv dist/index.html dist/ui.html",
+    "build": "pnpm run build:plugin && pnpm run build:ui",
+    "dev": "concurrently \"pnpm run build:plugin -- --watch\" \"vite\"",
+    "lint": "biome lint .",
+    "format": "biome format --write .",
+    "check": "biome check --write ."
+  },
+  "keywords": [
+    "figma",
+    "plugin",
+    "components"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@figma/plugin-typings": "^1.102.0",
+    "@tailwindcss/vite": "^4.0.0",
+    "@types/node": "^25.0.9",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "concurrently": "^9.1.0",
+    "esbuild": "^0.24.0",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.3",
+    "vite-plugin-singlefile": "^2.0.3"
+  }
+}
