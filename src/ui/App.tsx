@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import type { ScanResultMessage, UIMessage, UnlinkedInstance } from '../types'
 
 function App() {
-  const [scope, setScope] = useState<'current-page' | 'entire-document'>('current-page')
+  const [scope, setScope] = useState<'current-page' | 'project'>('current-page')
   const [instances, setInstances] = useState<UnlinkedInstance[]>([])
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [isScanning, setIsScanning] = useState(true)
@@ -19,7 +19,7 @@ function App() {
 
   // Handle scope change - rescan when scope changes
   const handleScopeChange = useCallback(() => {
-    const newScope = scope === 'current-page' ? 'entire-document' : 'current-page'
+    const newScope = scope === 'current-page' ? 'project' : 'current-page'
     setScope(newScope)
     setIsScanning(true)
     setInstances([])
@@ -175,17 +175,17 @@ function App() {
               </button>
             </div>
             <label className="flex items-center gap-2 cursor-pointer">
-              <span className="text-xs">{scope === 'current-page' ? 'Current page' : 'Entire document'}</span>
+              <span className="text-xs">{scope === 'current-page' ? 'Current page' : 'Entire project'}</span>
               <input
                 type="checkbox"
-                checked={scope === 'entire-document'}
+                checked={scope === 'project'}
                 onChange={handleScopeChange}
                 disabled={isScanning}
                 className="w-8 h-5 appearance-none rounded-full relative cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{
-                  backgroundColor: scope === 'entire-document' ? '#0d99ff' : 'var(--figma-color-bg-secondary)',
+                  backgroundColor: scope === 'project' ? '#0d99ff' : 'var(--figma-color-bg-secondary)',
                   backgroundImage:
-                    scope === 'entire-document'
+                    scope === 'project'
                       ? 'radial-gradient(circle at 22px 10px, white 6px, transparent 6px)'
                       : 'radial-gradient(circle at 10px 10px, white 6px, transparent 6px)',
                 }}
@@ -208,7 +208,7 @@ function App() {
 
           {!isScanning && instances.length === 0 && (
             <div className="text-xs" style={{ color: 'var(--figma-color-text-secondary)' }}>
-              No unlinked component instances found.
+              No unlinked component instances found {scope === 'project' ? 'in project' : 'in current page'}.
             </div>
           )}
 
@@ -230,7 +230,7 @@ function App() {
                       border: `1px solid ${allChecked ? ' transparent' : 'var(--figma-color-border)'}`,
                     }}
                   >
-                    {allChecked ? 'Uncheck all' : 'Check all'}
+                    Toggle matches
                   </button>
                 )}
                 {instances.filter((inst) => inst.matchedComponentId === null).length > 2 && (
@@ -313,87 +313,218 @@ function App() {
         {/* Instance list */}
         {!isScanning &&
           !showMissing &&
-          instances.map((instance) => (
-            <div
-              key={instance.instanceId}
-              className="p-3 transition-colors"
-              style={{ borderBottom: '1px solid var(--figma-color-border)', backgroundColor: 'transparent' }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--figma-color-bg-hover)')}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
-            >
-              <div className="flex items-start gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleCheckboxChange(instance.instanceId, !selectedIds.has(instance.instanceId))}
-                  disabled={instance.matchedComponentId === null}
-                  className="mt-0.5 w-4 h-4 flex-shrink-0 rounded disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  style={{
-                    backgroundColor: selectedIds.has(instance.instanceId) ? '#0d99ff' : 'white',
-                    border: '1.5px solid',
-                    borderColor: selectedIds.has(instance.instanceId) ? '#0d99ff' : '#999',
-                  }}
-                  aria-label="Select instance"
-                >
-                  {selectedIds.has(instance.instanceId) && (
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width={16}
-                      height={16}
-                      viewBox="0 0 15 15"
-                      style={{ translate: '-1.5px -1.5px' }}
-                    >
-                      <path
-                        fill="white"
-                        d="M10.602 3.908a.626.626 0 0 1 1.046.684l-4.25 6.5a.626.626 0 0 1-.944.12l-2.75-2.5l-.084-.094a.626.626 0 0 1 .823-.906l.103.075l2.207 2.006z"
-                      ></path>
-                    </svg>
-                  )}
-                </button>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <div className="text-xs font-medium truncate flex-1">{instance.instanceName}</div>
-                    <button
-                      type="button"
-                      onClick={() => handleSelect(instance.instanceId)}
-                      className="flex-shrink-0 p-1 rounded transition-colors"
-                      style={{ backgroundColor: 'transparent' }}
+          (() => {
+            if (scope === 'project') {
+              // Group instances by page
+              const instancesByPage = instances.reduce(
+                (acc, instance) => {
+                  if (!acc[instance.pageName]) {
+                    acc[instance.pageName] = []
+                  }
+                  acc[instance.pageName].push(instance)
+                  return acc
+                },
+                {} as Record<string, UnlinkedInstance[]>,
+              )
+
+              return Object.entries(instancesByPage).map(([pageName, pageInstances]) => (
+                <div key={pageName}>
+                  {/* Page header */}
+                  <div
+                    className="px-3 py-2 text-xs font-semibold sticky top-0 z-10"
+                    style={{
+                      backgroundColor: 'var(--figma-color-bg-secondary)',
+                      borderBottom: '1px solid var(--figma-color-border)',
+                      color: 'var(--figma-color-text)',
+                    }}
+                  >
+                    {pageName} ({pageInstances.length})
+                  </div>
+                  {/* Instances in this page */}
+                  {pageInstances.map((instance) => (
+                    <div
+                      key={instance.instanceId}
+                      className="p-3 transition-colors"
+                      style={{ borderBottom: '1px solid var(--figma-color-border)', backgroundColor: 'transparent' }}
                       onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--figma-color-bg-hover)')}
                       onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
-                      title="Select in Figma"
                     >
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path
-                          d="M14.3548 5.64083L14.4191 5.71886C14.5471 5.91292 14.5256 6.17713 14.3548 6.34794C14.184 6.51875 13.9198 6.54018 13.7258 6.41216L13.6477 6.34794L12.0001 4.70033L4.70393 11.9965L12.0001 19.2927L19.2963 11.9965L17.6494 10.3496C17.4541 10.1543 17.4541 9.83774 17.6494 9.64248C17.8446 9.44721 18.1612 9.44721 18.3565 9.64248L20.357 11.643C20.5522 11.8382 20.5522 12.1548 20.357 12.3501L12.3537 20.3533C12.1584 20.5486 11.8418 20.5486 11.6466 20.3533L3.64327 12.3501C3.44801 12.1548 3.44801 11.8382 3.64327 11.643L11.6466 3.63966L11.7246 3.57545C11.9187 3.44715 12.1828 3.46875 12.3537 3.63966L14.3548 5.64083Z"
-                          fill="currentColor"
-                        />
-                        <path
-                          d="M15.0005 4.00015C15.0005 3.72401 15.2243 3.5002 15.5004 3.5002L20 3.5002C20.2761 3.5002 20.4999 3.72401 20.4999 4.00015V8.49967C20.4999 8.77581 20.2761 8.99961 20 8.99961C19.7239 8.99953 19.5 8.77576 19.5 8.49967V5.2072L12.3537 12.3535C12.1584 12.5488 11.8418 12.5488 11.6466 12.3535C11.4513 12.1583 11.4513 11.8417 11.6466 11.6464L18.7929 4.5001L15.5004 4.5001C15.2243 4.5001 15.0006 4.27622 15.0005 4.00015Z"
-                          fill="currentColor"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                  <div className="text-[10px] mt-0.5" style={{ color: 'var(--figma-color-text-secondary)' }}>
-                    {instance.pageName} › {instance.parentName}
-                  </div>
-                  {instance.deletedComponentName && (
-                    <div className="text-[10px] mt-0.5" style={{ color: 'var(--figma-color-text-secondary)' }}>
-                      Original: {instance.deletedComponentName}
+                      <div className="flex items-start gap-2">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleCheckboxChange(instance.instanceId, !selectedIds.has(instance.instanceId))
+                          }
+                          disabled={instance.matchedComponentId === null}
+                          className="mt-0.5 w-4 h-4 shrink-0 rounded disabled:opacity-10 disabled:cursor-not-allowed transition-colors"
+                          style={{
+                            backgroundColor: selectedIds.has(instance.instanceId) ? '#0d99ff' : 'white',
+                            border: '1.5px solid',
+                            borderColor: selectedIds.has(instance.instanceId) ? '#0d99ff' : '#999',
+                          }}
+                          aria-label="Select instance"
+                        >
+                          {selectedIds.has(instance.instanceId) && (
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width={16}
+                              height={16}
+                              viewBox="0 0 15 15"
+                              style={{ translate: '-1.5px -1.5px' }}
+                            >
+                              <path
+                                fill="white"
+                                d="M10.602 3.908a.626.626 0 0 1 1.046.684l-4.25 6.5a.626.626 0 0 1-.944.12l-2.75-2.5l-.084-.094a.626.626 0 0 1 .823-.906l.103.075l2.207 2.006z"
+                              ></path>
+                            </svg>
+                          )}
+                        </button>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <div className="text-xs font-medium truncate flex-1">{instance.instanceName}</div>
+                            <button
+                              type="button"
+                              onClick={() => handleSelect(instance.instanceId)}
+                              className="shrink-0 p-1 rounded transition-colors"
+                              style={{ backgroundColor: 'transparent' }}
+                              onMouseEnter={(e) =>
+                                (e.currentTarget.style.backgroundColor = 'var(--figma-color-bg-hover)')
+                              }
+                              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                              title="Select in Figma"
+                            >
+                              <svg
+                                width="24"
+                                height="24"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path
+                                  d="M14.3548 5.64083L14.4191 5.71886C14.5471 5.91292 14.5256 6.17713 14.3548 6.34794C14.184 6.51875 13.9198 6.54018 13.7258 6.41216L13.6477 6.34794L12.0001 4.70033L4.70393 11.9965L12.0001 19.2927L19.2963 11.9965L17.6494 10.3496C17.4541 10.1543 17.4541 9.83774 17.6494 9.64248C17.8446 9.44721 18.1612 9.44721 18.3565 9.64248L20.357 11.643C20.5522 11.8382 20.5522 12.1548 20.357 12.3501L12.3537 20.3533C12.1584 20.5486 11.8418 20.5486 11.6466 20.3533L3.64327 12.3501C3.44801 12.1548 3.44801 11.8382 3.64327 11.643L11.6466 3.63966L11.7246 3.57545C11.9187 3.44715 12.1828 3.46875 12.3537 3.63966L14.3548 5.64083Z"
+                                  fill="currentColor"
+                                />
+                                <path
+                                  d="M15.0005 4.00015C15.0005 3.72401 15.2243 3.5002 15.5004 3.5002L20 3.5002C20.2761 3.5002 20.4999 3.72401 20.4999 4.00015V8.49967C20.4999 8.77581 20.2761 8.99961 20 8.99961C19.7239 8.99953 19.5 8.77576 19.5 8.49967V5.2072L12.3537 12.3535C12.1584 12.5488 11.8418 12.5488 11.6466 12.3535C11.4513 12.1583 11.4513 11.8417 11.6466 11.6464L18.7929 4.5001L15.5004 4.5001C15.2243 4.5001 15.0006 4.27622 15.0005 4.00015Z"
+                                  fill="currentColor"
+                                />
+                              </svg>
+                            </button>
+                          </div>
+                          <div className="text-[10px] mt-0.5" style={{ color: 'var(--figma-color-text-secondary)' }}>
+                            {instance.parentName}
+                          </div>
+                          {instance.deletedComponentName && (
+                            <div className="text-[10px] mt-0.5" style={{ color: 'var(--figma-color-text-secondary)' }}>
+                              Original: {instance.deletedComponentName}
+                            </div>
+                          )}
+                          {instance.matchedComponentId ? (
+                            <div className="text-[10px] mt-1" style={{ color: '#0c0' }}>
+                              ✓ Match: {instance.matchedComponentName}
+                            </div>
+                          ) : (
+                            <div className="text-[10px] mt-1" style={{ color: '#f00' }}>
+                              ✗ <strong>{instance.deletedComponentName || instance.instanceName}</strong> missing
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  )}
-                  {instance.matchedComponentId ? (
-                    <div className="text-[10px] mt-1" style={{ color: '#0c0' }}>
-                      ✓ Match: {instance.matchedComponentName}
-                    </div>
-                  ) : (
-                    <div className="text-[10px] mt-1" style={{ color: '#f00' }}>
-                      ✗ <strong>{instance.deletedComponentName || instance.instanceName}</strong> missing
-                    </div>
-                  )}
+                  ))}
                 </div>
-              </div>
-            </div>
-          ))}
+              ))
+            } else {
+              // Current page mode - show flat list
+              return instances.map((instance) => (
+                <div
+                  key={instance.instanceId}
+                  className="p-3 transition-colors"
+                  style={{ borderBottom: '1px solid var(--figma-color-border)', backgroundColor: 'transparent' }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--figma-color-bg-hover)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                >
+                  <div className="flex items-start gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleCheckboxChange(instance.instanceId, !selectedIds.has(instance.instanceId))}
+                      disabled={instance.matchedComponentId === null}
+                      className="mt-0.5 w-4 h-4 shrink-0 rounded disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      style={{
+                        backgroundColor: selectedIds.has(instance.instanceId) ? '#0d99ff' : 'white',
+                        border: '1.5px solid',
+                        borderColor: selectedIds.has(instance.instanceId) ? '#0d99ff' : '#999',
+                      }}
+                      aria-label="Select instance"
+                    >
+                      {selectedIds.has(instance.instanceId) && (
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width={16}
+                          height={16}
+                          viewBox="0 0 15 15"
+                          style={{ translate: '-1.5px -1.5px' }}
+                        >
+                          <path
+                            fill="white"
+                            d="M10.602 3.908a.626.626 0 0 1 1.046.684l-4.25 6.5a.626.626 0 0 1-.944.12l-2.75-2.5l-.084-.094a.626.626 0 0 1 .823-.906l.103.075l2.207 2.006z"
+                          ></path>
+                        </svg>
+                      )}
+                    </button>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <div className="text-xs font-medium truncate flex-1">{instance.instanceName}</div>
+                        <button
+                          type="button"
+                          onClick={() => handleSelect(instance.instanceId)}
+                          className="shrink-0 p-1 rounded transition-colors"
+                          style={{ backgroundColor: 'transparent' }}
+                          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--figma-color-bg-hover)')}
+                          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                          title="Select in Figma"
+                        >
+                          <svg
+                            width="24"
+                            height="24"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path
+                              d="M14.3548 5.64083L14.4191 5.71886C14.5471 5.91292 14.5256 6.17713 14.3548 6.34794C14.184 6.51875 13.9198 6.54018 13.7258 6.41216L13.6477 6.34794L12.0001 4.70033L4.70393 11.9965L12.0001 19.2927L19.2963 11.9965L17.6494 10.3496C17.4541 10.1543 17.4541 9.83774 17.6494 9.64248C17.8446 9.44721 18.1612 9.44721 18.3565 9.64248L20.357 11.643C20.5522 11.8382 20.5522 12.1548 20.357 12.3501L12.3537 20.3533C12.1584 20.5486 11.8418 20.5486 11.6466 20.3533L3.64327 12.3501C3.44801 12.1548 3.44801 11.8382 3.64327 11.643L11.6466 3.63966L11.7246 3.57545C11.9187 3.44715 12.1828 3.46875 12.3537 3.63966L14.3548 5.64083Z"
+                              fill="currentColor"
+                            />
+                            <path
+                              d="M15.0005 4.00015C15.0005 3.72401 15.2243 3.5002 15.5004 3.5002L20 3.5002C20.2761 3.5002 20.4999 3.72401 20.4999 4.00015V8.49967C20.4999 8.77581 20.2761 8.99961 20 8.99961C19.7239 8.99953 19.5 8.77576 19.5 8.49967V5.2072L12.3537 12.3535C12.1584 12.5488 11.8418 12.5488 11.6466 12.3535C11.4513 12.1583 11.4513 11.8417 11.6466 11.6464L18.7929 4.5001L15.5004 4.5001C15.2243 4.5001 15.0006 4.27622 15.0005 4.00015Z"
+                              fill="currentColor"
+                            />
+                          </svg>
+                        </button>
+                      </div>
+                      <div className="text-[10px] mt-0.5" style={{ color: 'var(--figma-color-text-secondary)' }}>
+                        {instance.pageName} › {instance.parentName}
+                      </div>
+                      {instance.deletedComponentName && (
+                        <div className="text-[10px] mt-0.5" style={{ color: 'var(--figma-color-text-secondary)' }}>
+                          Original: {instance.deletedComponentName}
+                        </div>
+                      )}
+                      {instance.matchedComponentId ? (
+                        <div className="text-[10px] mt-1" style={{ color: '#0c0' }}>
+                          ✓ Match: {instance.matchedComponentName}
+                        </div>
+                      ) : (
+                        <div className="text-[10px] mt-1" style={{ color: '#f00' }}>
+                          ✗ <strong>{instance.deletedComponentName || instance.instanceName}</strong> missing
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))
+            }
+          })()}
       </div>
 
       {/* Fixed bottom buttons - hidden when showing missing */}
