@@ -1,5 +1,14 @@
 @import 'tailwindcss';
 
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* Base styles from @create-figma-plugin/ui */
 :root {
   --border-1: 1px;

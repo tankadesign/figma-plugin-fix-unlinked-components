@@ -16,11 +16,25 @@ async function findUnlinkedInstances(scope: 'current-page' | 'entire-document'):
   }
 
   const pagesToScan = scope === 'current-page' ? [figma.currentPage] : figma.root.children
+  const BATCH_SIZE = 50 // Process 50 instances at a time
 
   for (const page of pagesToScan) {
     const instances = page.findAll((node) => node.type === 'INSTANCE') as InstanceNode[]
+    const totalInstances = instances.length
 
-    for (const instance of instances) {
+    for (let i = 0; i < instances.length; i++) {
+      // Send progress update every batch
+      if (i % BATCH_SIZE === 0) {
+        figma.ui.postMessage({
+          type: 'progress',
+          current: i,
+          total: totalInstances,
+        })
+        // Allow UI to update
+        await new Promise((resolve) => setTimeout(resolve, 0))
+      }
+
+      const instance = instances[i]
       const mainComponent = await instance.getMainComponentAsync()
 
       // Check if component needs restoration:

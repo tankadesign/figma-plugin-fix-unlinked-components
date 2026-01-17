@@ -50,6 +50,12 @@ export interface ErrorMessage {
   message: string
 }
 
+export interface ProgressMessage {
+  type: 'progress'
+  current: number
+  total: number
+}
+
 export type PluginMessage = ScanMessage | ReplaceMessage | SelectMessage | CancelMessage | ResizeMessage
 
-export type UIMessage = ScanResultMessage | ReplaceCompleteMessage | ErrorMessage
+export type UIMessage = ScanResultMessage | ReplaceCompleteMessage | ErrorMessage | ProgressMessage
