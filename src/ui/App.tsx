@@ -144,6 +144,8 @@ function App() {
     document.addEventListener('mouseup', handleMouseUp)
   }, [])
 
+  const linkedInstancesCount = instances.filter((inst) => inst.matchedComponentId !== null).length
+
   return (
     <div
       className="flex flex-col h-full"
@@ -158,7 +160,7 @@ function App() {
                 type="button"
                 onClick={handleRefresh}
                 disabled={isScanning}
-                className="p-1 rounded transition-colors disabled:opacity-50"
+                className="p-1 rounded transition-colors disabled:opacity-10"
                 style={{ backgroundColor: 'transparent' }}
                 onMouseEnter={(e) =>
                   !isScanning && (e.currentTarget.style.backgroundColor = 'var(--figma-color-bg-hover)')
@@ -181,9 +183,10 @@ function App() {
                 checked={scope === 'project'}
                 onChange={handleScopeChange}
                 disabled={isScanning}
-                className="w-8 h-5 appearance-none rounded-full relative cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-8 h-5 appearance-none rounded-full relative cursor-pointer transition-colors disabled:opacity-10 disabled:cursor-not-allowed"
                 style={{
-                  backgroundColor: scope === 'project' ? '#0d99ff' : 'var(--figma-color-bg-pressed)',
+                  backgroundColor:
+                    scope === 'project' ? 'var(--figma-color-bg-inverse)' : 'var(--figma-color-bg-pressed)',
                   backgroundImage:
                     scope === 'project'
                       ? 'radial-gradient(circle at 22px 10px, white 6px, transparent 6px)'
@@ -216,16 +219,19 @@ function App() {
             <div className="flex items-center justify-between">
               <div className="text-xs font-semibold">
                 Found {instances.length} unlinked instance{instances.length !== 1 ? 's' : ''}
+                {linkedInstancesCount === 0 && (
+                  <span className="block opacity-50">Paste master components into the document and refresh</span>
+                )}
               </div>
               <div className="flex gap-1">
-                {!showMissing && (
+                {!showMissing && linkedInstancesCount > 0 && (
                   <button
                     type="button"
                     onClick={handleToggleAll}
                     className="text-[10px] font-medium rounded transition-colors"
                     style={{
                       padding: '2px 4px',
-                      backgroundColor: allChecked ? 'var(--color-bg-inverse)' : 'transparent',
+                      backgroundColor: allChecked ? 'var(--figma-color-bg-inverse)' : 'transparent',
                       color: allChecked ? 'white' : 'var(--figma-color-text)',
                       border: `1px solid ${allChecked ? ' transparent' : 'var(--figma-color-border)'}`,
                     }}
@@ -240,7 +246,7 @@ function App() {
                     className="text-[10px] font-medium rounded transition-colors"
                     style={{
                       padding: '2px 4px',
-                      backgroundColor: showMissing ? '#0d99ff' : 'transparent',
+                      backgroundColor: showMissing ? 'var(--figma-color-bg-inverse)' : 'transparent',
                       color: showMissing ? 'white' : 'var(--figma-color-text)',
                       border: `1px solid ${showMissing ? ' transparent' : 'var(--figma-color-border)'}`,
                     }}
@@ -267,7 +273,12 @@ function App() {
               style={{ animation: 'spin 1s linear infinite' }}
             >
               <circle cx="16" cy="16" r="12" stroke="var(--figma-color-border)" strokeWidth="3" strokeLinecap="round" />
-              <path d="M16 4 A12 12 0 0 1 28 16" stroke="#0d99ff" strokeWidth="3" strokeLinecap="round" />
+              <path
+                d="M16 4 A12 12 0 0 1 28 16"
+                stroke="var(--figma-color-bg-inverse)"
+                strokeWidth="3"
+                strokeLinecap="round"
+              />
             </svg>
 
             <div className="text-xs text-center" style={{ color: 'var(--figma-color-text-secondary)' }}>
@@ -358,9 +369,13 @@ function App() {
                           disabled={instance.matchedComponentId === null}
                           className="mt-0.5 w-4 h-4 shrink-0 rounded disabled:opacity-10 disabled:cursor-not-allowed transition-colors"
                           style={{
-                            backgroundColor: selectedIds.has(instance.instanceId) ? '#0d99ff' : 'white',
+                            backgroundColor: selectedIds.has(instance.instanceId)
+                              ? 'var(--figma-color-bg-inverse)'
+                              : 'white',
                             border: '1.5px solid',
-                            borderColor: selectedIds.has(instance.instanceId) ? '#0d99ff' : '#999',
+                            borderColor: selectedIds.has(instance.instanceId)
+                              ? 'var(--figma-color-bg-inverse)'
+                              : '#999',
                           }}
                           aria-label="Select instance"
                         >
@@ -449,11 +464,13 @@ function App() {
                       type="button"
                       onClick={() => handleCheckboxChange(instance.instanceId, !selectedIds.has(instance.instanceId))}
                       disabled={instance.matchedComponentId === null}
-                      className="mt-0.5 w-4 h-4 shrink-0 rounded disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="mt-0.5 w-4 h-4 shrink-0 rounded disabled:opacity-10 disabled:cursor-not-allowed transition-colors"
                       style={{
-                        backgroundColor: selectedIds.has(instance.instanceId) ? '#0d99ff' : 'white',
+                        backgroundColor: selectedIds.has(instance.instanceId)
+                          ? 'var(--figma-color-bg-inverse)'
+                          : 'white',
                         border: '1.5px solid',
-                        borderColor: selectedIds.has(instance.instanceId) ? '#0d99ff' : '#999',
+                        borderColor: selectedIds.has(instance.instanceId) ? 'var(--figma-color-bg-inverse)' : '#999',
                       }}
                       aria-label="Select instance"
                     >
@@ -553,7 +570,8 @@ function App() {
               className="flex-1 text-xs font-medium rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               style={{
                 height: '32px',
-                backgroundColor: selectedIds.size === 0 || isScanning ? '#ccc' : '#0d99ff',
+                backgroundColor:
+                  selectedIds.size === 0 || isScanning ? '#ccc' : 'var(--figma-color-bg-selected-strong)',
                 color: 'white',
                 cursor: selectedIds.size === 0 || isScanning ? 'not-allowed' : 'pointer',
               }}
