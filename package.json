@@ -17,14 +17,14 @@
     "plugin",
     "components"
   ],
-  "author": "",
+  "author": "Jeff Falcon",
   "license": "ISC",
   "dependencies": {
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
-    "@biomejs/biome": "^1.9.4",
+    "@biomejs/biome": "^2.3.11",
     "@figma/plugin-typings": "^1.102.0",
     "@tailwindcss/vite": "^4.0.0",
     "@types/node": "^25.0.9",

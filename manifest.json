@@ -1,6 +1,6 @@
 {
   "name": "Fix Unlinked Components",
-  "id": "fix-unlinked-components",
+  "id": "1594128357731327778",
   "api": "1.0.0",
   "main": "dist/code.js",
   "ui": "dist/ui.html",
