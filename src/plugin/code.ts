@@ -29,6 +29,7 @@ async function findUnlinkedInstances(scope: 'current-page' | 'entire-document'):
           type: 'progress',
           current: i,
           total: totalInstances,
+          pageName: scope === 'entire-document' ? page.name : undefined,
         })
         // Allow UI to update
         await new Promise((resolve) => setTimeout(resolve, 0))

@@ -5,9 +5,9 @@ function App() {
   const [scope, setScope] = useState<'current-page' | 'entire-document'>('current-page')
   const [instances, setInstances] = useState<UnlinkedInstance[]>([])
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
-  const [isScanning, setIsScanning] = useState(false)
+  const [isScanning, setIsScanning] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [progress, setProgress] = useState<{ current: number; total: number } | null>(null)
+  const [progress, setProgress] = useState<{ current: number; total: number; pageName?: string } | null>(null)
   const [showMissing, setShowMissing] = useState(false)
   const [allChecked, setAllChecked] = useState(false)
 
@@ -25,6 +25,8 @@ function App() {
     setInstances([])
     setSelectedIds(new Set())
     setError(null)
+    setShowMissing(false)
+    setAllChecked(false)
 
     parent.postMessage({ pluginMessage: { type: 'scan', scope: newScope } }, '*')
   }, [scope])
@@ -47,8 +49,8 @@ function App() {
         setSelectedIds(withMatches)
         setAllChecked(withMatches.size > 0)
       } else if (msg.type === 'progress') {
-        const progressMsg = msg as { type: 'progress'; current: number; total: number }
-        setProgress({ current: progressMsg.current, total: progressMsg.total })
+        const progressMsg = msg as { type: 'progress'; current: number; total: number; pageName?: string }
+        setProgress({ current: progressMsg.current, total: progressMsg.total, pageName: progressMsg.pageName })
       } else if (msg.type === 'replace-complete') {
         setIsScanning(false)
         // Plugin will close itself
@@ -111,6 +113,8 @@ function App() {
     setSelectedIds(new Set())
     setError(null)
     setProgress(null)
+    setShowMissing(false)
+    setAllChecked(false)
     parent.postMessage({ pluginMessage: { type: 'scan', scope } }, '*')
   }, [scope])
 
@@ -214,19 +218,21 @@ function App() {
                 Found {instances.length} unlinked instance{instances.length !== 1 ? 's' : ''}
               </div>
               <div className="flex gap-1">
-                <button
-                  type="button"
-                  onClick={handleToggleAll}
-                  className="text-[10px] font-medium rounded transition-colors"
-                  style={{
-                    padding: '2px 4px',
-                    backgroundColor: allChecked ? '#0d99ff' : 'transparent',
-                    color: allChecked ? 'white' : 'var(--figma-color-text)',
-                    border: `1px solid ${allChecked ? ' transparent' : 'var(--figma-color-border)'}`,
-                  }}
-                >
-                  {allChecked ? 'Uncheck all' : 'Check all'}
-                </button>
+                {!showMissing && (
+                  <button
+                    type="button"
+                    onClick={handleToggleAll}
+                    className="text-[10px] font-medium rounded transition-colors"
+                    style={{
+                      padding: '2px 4px',
+                      backgroundColor: allChecked ? '#0d99ff' : 'transparent',
+                      color: allChecked ? 'white' : 'var(--figma-color-text)',
+                      border: `1px solid ${allChecked ? ' transparent' : 'var(--figma-color-border)'}`,
+                    }}
+                  >
+                    {allChecked ? 'Uncheck all' : 'Check all'}
+                  </button>
+                )}
                 {instances.filter((inst) => inst.matchedComponentId === null).length > 2 && (
                   <button
                     type="button"
@@ -269,6 +275,11 @@ function App() {
                 ? `Processing ${progress.current} / ${progress.total} instances`
                 : 'Scanning for unlinked components...'}
             </div>
+            {progress?.pageName && (
+              <div className="text-[10px] text-center" style={{ color: 'var(--figma-color-text-secondary)' }}>
+                Page: {progress.pageName}
+              </div>
+            )}
           </div>
         )}
 

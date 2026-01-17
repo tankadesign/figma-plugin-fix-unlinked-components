@@ -54,6 +54,7 @@ export interface ProgressMessage {
   type: 'progress'
   current: number
   total: number
+  pageName?: string
 }
 
 export type PluginMessage = ScanMessage | ReplaceMessage | SelectMessage | CancelMessage | ResizeMessage
