@@ -183,7 +183,7 @@ function App() {
                 disabled={isScanning}
                 className="w-8 h-5 appearance-none rounded-full relative cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{
-                  backgroundColor: scope === 'project' ? '#0d99ff' : 'var(--figma-color-bg-secondary)',
+                  backgroundColor: scope === 'project' ? '#0d99ff' : 'var(--figma-color-bg-pressed)',
                   backgroundImage:
                     scope === 'project'
                       ? 'radial-gradient(circle at 22px 10px, white 6px, transparent 6px)'
@@ -225,7 +225,7 @@ function App() {
                     className="text-[10px] font-medium rounded transition-colors"
                     style={{
                       padding: '2px 4px',
-                      backgroundColor: allChecked ? '#0d99ff' : 'transparent',
+                      backgroundColor: allChecked ? 'var(--color-bg-inverse)' : 'transparent',
                       color: allChecked ? 'white' : 'var(--figma-color-text)',
                       border: `1px solid ${allChecked ? ' transparent' : 'var(--figma-color-border)'}`,
                     }}
