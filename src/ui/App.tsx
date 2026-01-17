@@ -216,46 +216,48 @@ function App() {
           )}
 
           {!isScanning && instances.length > 0 && (
-            <div className="flex items-center justify-between">
-              <div className="text-xs font-semibold">
-                Found {instances.length} unlinked instance{instances.length !== 1 ? 's' : ''}
-                {linkedInstancesCount === 0 && (
-                  <span className="block opacity-50">Paste master components into the document and refresh</span>
-                )}
+            <>
+              <div className="flex items-center justify-between">
+                <div className="text-xs font-semibold">
+                  Found {instances.length} unlinked instance{instances.length !== 1 ? 's' : ''}
+                </div>
+                <div className="flex gap-1">
+                  {!showMissing && linkedInstancesCount > 0 && (
+                    <button
+                      type="button"
+                      onClick={handleToggleAll}
+                      className="text-[10px] font-medium rounded transition-colors"
+                      style={{
+                        padding: '2px 4px',
+                        backgroundColor: allChecked ? 'var(--figma-color-bg-inverse)' : 'transparent',
+                        color: allChecked ? 'white' : 'var(--figma-color-text)',
+                        border: `1px solid ${allChecked ? ' transparent' : 'var(--figma-color-border)'}`,
+                      }}
+                    >
+                      Toggle matches
+                    </button>
+                  )}
+                  {instances.filter((inst) => inst.matchedComponentId === null).length > 2 && (
+                    <button
+                      type="button"
+                      onClick={handleToggleMissing}
+                      className="text-[10px] font-medium rounded transition-colors"
+                      style={{
+                        padding: '2px 4px',
+                        backgroundColor: showMissing ? 'var(--figma-color-bg-inverse)' : 'transparent',
+                        color: showMissing ? 'white' : 'var(--figma-color-text)',
+                        border: `1px solid ${showMissing ? ' transparent' : 'var(--figma-color-border)'}`,
+                      }}
+                    >
+                      {showMissing ? 'Hide missing' : 'Show missing'}
+                    </button>
+                  )}
+                </div>
               </div>
-              <div className="flex gap-1">
-                {!showMissing && linkedInstancesCount > 0 && (
-                  <button
-                    type="button"
-                    onClick={handleToggleAll}
-                    className="text-[10px] font-medium rounded transition-colors"
-                    style={{
-                      padding: '2px 4px',
-                      backgroundColor: allChecked ? 'var(--figma-color-bg-inverse)' : 'transparent',
-                      color: allChecked ? 'white' : 'var(--figma-color-text)',
-                      border: `1px solid ${allChecked ? ' transparent' : 'var(--figma-color-border)'}`,
-                    }}
-                  >
-                    Toggle matches
-                  </button>
-                )}
-                {instances.filter((inst) => inst.matchedComponentId === null).length > 2 && (
-                  <button
-                    type="button"
-                    onClick={handleToggleMissing}
-                    className="text-[10px] font-medium rounded transition-colors"
-                    style={{
-                      padding: '2px 4px',
-                      backgroundColor: showMissing ? 'var(--figma-color-bg-inverse)' : 'transparent',
-                      color: showMissing ? 'white' : 'var(--figma-color-text)',
-                      border: `1px solid ${showMissing ? ' transparent' : 'var(--figma-color-border)'}`,
-                    }}
-                  >
-                    {showMissing ? 'Hide missing' : 'Show missing'}
-                  </button>
-                )}
-              </div>
-            </div>
+              {linkedInstancesCount === 0 && (
+                <div className="text-xs mt-2 opacity-50">Paste master components into the document and refresh</div>
+              )}
+            </>
           )}
         </header>
       )}
@@ -342,14 +344,15 @@ function App() {
                 <div key={pageName}>
                   {/* Page header */}
                   <div
-                    className="px-3 py-2 text-xs font-semibold sticky top-0 z-10"
+                    className="px-3 py-2 text-xs font-semibold sticky top-0 z-10 flex w-full justify-between"
                     style={{
                       backgroundColor: 'var(--figma-color-bg-secondary)',
                       borderBottom: '1px solid var(--figma-color-border)',
                       color: 'var(--figma-color-text)',
                     }}
                   >
-                    {pageName} ({pageInstances.length})
+                    <span>{pageName}</span>
+                    <span>({pageInstances.length})</span>
                   </div>
                   {/* Instances in this page */}
                   {pageInstances.map((instance) => (
